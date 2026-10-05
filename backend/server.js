@@ -7,6 +7,24 @@ const db = require("./database/database");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+/* ---------- Default Admin ---------- */
+const adminUsername = process.env.ADMIN_USERNAME || "rohit";
+const adminPassword = process.env.ADMIN_PASSWORD || "8010";
+
+const existingAdmin = db
+  .prepare("SELECT id FROM admins WHERE username = ?")
+  .get(adminUsername);
+
+if (!existingAdmin) {
+  db.prepare(
+    "INSERT INTO admins (username, password) VALUES (?, ?)"
+  ).run(adminUsername, adminPassword);
+
+  console.log(`Default admin created: ${adminUsername}`);
+} else {
+  console.log(`Admin already exists: ${adminUsername}`);
+}
+
 /* ---------- Middleware ---------- */
 app.use(cors());
 app.use(express.json());
@@ -23,6 +41,7 @@ app.get("/api/health", (req, res) => {
 app.get("/api/db-test", (req, res) => {
   try {
     const ping = db.prepare("SELECT 1 AS ok").get();
+
     const tables = db
       .prepare(
         `SELECT name FROM sqlite_master
